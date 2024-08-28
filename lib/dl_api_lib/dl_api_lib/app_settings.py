@@ -314,7 +314,10 @@ class AuthSettingsOS(SettingsBase):
     CLIENT_SECRET: str = s_attrib("CLIENT_SECRET", sensitive=True)  # type: ignore
     APP_CLIENT_ID: str = s_attrib("APP_CLIENT_ID")  # type: ignore
     APP_CLIENT_SECRET: str = s_attrib("APP_CLIENT_SECRET", sensitive=True)  # type: ignore
-
+    KEYCLOAK_CLIENT_ID: str = s_attrib("KEYCLOAK_CLIENT_ID") # type: ignore
+    KEYCLOAK_URI: str = s_attrib("KEYCLOAK_URI") # type: ignore
+    KEYCLOAK_REALM_NAME: str = s_attrib("KEYCLOAK_REALM_NAME") # type: ignore
+    KEYCLOAK_SECRET_KEY: str = s_attrib("KEYCLOAK_SECRET_KEY", sensitive=True) # type: ignore
 
 @attr.s(frozen=True)
 class AppSettingsOS(AppSettings):
@@ -329,6 +332,10 @@ class AppSettingsOS(AppSettings):
                 CLIENT_SECRET=cfg.AUTH_CLIENT_SECRET,
                 APP_CLIENT_ID=cfg.AUTH_APP_CLIENT_ID,
                 APP_CLIENT_SECRET=cfg.AUTH_APP_CLIENT_SECRET,
+                KEYCLOAK_SECRET_KEY=cfg.AUTH_KEYCLOAK_SECRET_KEY,
+                KEYCLOAK_REALM_NAME=cfg.AUTH_KEYCLOAK_REALM_NAME,
+                KEYCLOAK_URI=cfg.AUTH_KEYCLOAK_URI,
+                KEYCLOAK_CLIENT_ID=cfg.AUTH_KEYCLOAK_CLIENT_ID,
             )
             if is_setting_applicable(cfg, "AUTH_TYPE")
             else None
