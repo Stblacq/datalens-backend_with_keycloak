@@ -97,35 +97,59 @@ class StandaloneControlApiAppFactory(
             LOGGER.warning("No auth settings found, continuing without auth setup")
             return False
 
-        # TODO: Add support for other auth types
-        assert self._settings.AUTH.TYPE == "ZITADEL"
-        import httpx
+        if self._settings.AUTH.TYPE == "ZITADEL":
+            import httpx
+            import dl_zitadel
 
-        import dl_zitadel
+            ca_data = get_multiple_root_certificates(
+                self._settings.CA_FILE_PATH, *self._settings.EXTRA_CA_FILE_PATHS,)
 
-        ca_data = get_multiple_root_certificates(
-            self._settings.CA_FILE_PATH,
-            *self._settings.EXTRA_CA_FILE_PATHS,
-        )
+            zitadel_client = dl_zitadel.ZitadelSyncClient(
+                base_client=httpx.Client(
+                    verify=ssl.create_default_context(cadata=ca_data.decode("ascii")),
+                ),
+                base_url=self._settings.AUTH.BASE_URL,
+                project_id=self._settings.AUTH.PROJECT_ID,
+                client_id=self._settings.AUTH.CLIENT_ID,
+                client_secret=self._settings.AUTH.CLIENT_SECRET,
+                app_client_id=self._settings.AUTH.APP_CLIENT_ID,
+                app_client_secret=self._settings.AUTH.APP_CLIENT_SECRET,
+            )
+            token_storage = dl_zitadel.ZitadelSyncTokenStorage(
+                client=zitadel_client,
+            )
 
-        zitadel_client = dl_zitadel.ZitadelSyncClient(
-            base_client=httpx.Client(
-                verify=ssl.create_default_context(cadata=ca_data.decode("ascii")),
-            ),
-            base_url=self._settings.AUTH.BASE_URL,
-            project_id=self._settings.AUTH.PROJECT_ID,
-            client_id=self._settings.AUTH.CLIENT_ID,
-            client_secret=self._settings.AUTH.CLIENT_SECRET,
-            app_client_id=self._settings.AUTH.APP_CLIENT_ID,
-            app_client_secret=self._settings.AUTH.APP_CLIENT_SECRET,
-        )
-        token_storage = dl_zitadel.ZitadelSyncTokenStorage(
-            client=zitadel_client,
-        )
+            dl_zitadel.FlaskMiddleware(
+                client=zitadel_client,
+                token_storage=token_storage,
+            ).set_up(app=app)
+            LOGGER.info("Zitadel auth setup complete")
+            return True
 
-        dl_zitadel.FlaskMiddleware(
-            client=zitadel_client,
-            token_storage=token_storage,
-        ).set_up(app=app)
-        LOGGER.info("Zitadel auth setup complete")
-        return True
+        if self._settings.AUTH.TYPE == "KEYCLOAK":
+            import httpx
+            import dl_keycloak
+
+            ca_data = get_multiple_root_certificates(
+                self._settings.CA_FILE_PATH, *self._settings.EXTRA_CA_FILE_PATHS, )
+
+            keycloak_client = dl_keycloak.KeycloakSyncClient(
+                base_client=httpx.Client(
+                    verify=ssl.create_default_context(cadata=ca_data.decode("ascii")),
+                ),
+                keycloak_client_id=self._settings.AUTH.KEYCLOAK_CLIENT_ID,
+                keycloak_uri=self._settings.AUTH.KEYCLOAK_URI,
+                keycloak_realm_name=self._settings.AUTH.KEYCLOAK_REALM_NAME,
+                keycloak_secret_key=self._settings.AUTH.KEYCLOAK_SECRET_KEY,
+            )
+            token_storage = dl_keycloak.KeycloakSyncTokenStorage(
+                client=keycloak_client,
+            )
+
+            dl_keycloak.FlaskMiddleware(
+                client=keycloak_client,
+                token_storage=token_storage,
+            ).set_up(app=app)
+            LOGGER.info("Zitadel auth setup complete")
+            return True
+        raise ValueError("Invalid AuthType")
