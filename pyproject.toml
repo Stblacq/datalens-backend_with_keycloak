@@ -2,7 +2,7 @@
 name = "datalens_backend_root_package"
 version = "0.1.0"
 description = "Aux pyproject.toml for the common project properties"
-authors = ["DataLens Team <datalens-opensource@yandex-team.ru>"]
+authors = ["Oto Jerome <o.jerome@innopolis.university","DataLens Team <datalens-opensource@yandex-team.ru>"]
 license = "Apache 2.0"
 readme = "README.md"
 
